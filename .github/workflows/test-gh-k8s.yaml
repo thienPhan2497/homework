@@ -1,0 +1,66 @@
+# .github/workflows/test-oidc.yml
+name: Test OIDC k8s
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/github-actions-bootstrap-role
+          aws-region: ap-southeast-1
+
+      # Test 1 — Am I authenticated to AWS?
+      - name: Test 1 - AWS Identity
+        run: |
+          echo "=== Testing AWS Identity ==="
+          aws sts get-caller-identity
+
+      # Test 2 — Can I read CloudFormation?
+      - name: Test 2 - CloudFormation Access
+        run: |
+          echo "=== Testing CloudFormation ==="
+          aws cloudformation list-stacks \
+            --stack-status-filter CREATE_COMPLETE \
+            --query "StackSummaries[].StackName"
+
+      # Test 3 — Can I reach the cluster?
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Test 3 - Get kubeconfig
+        run: |
+          echo "=== Testing Cluster Access ==="
+
+          # Get control plane IP from CloudFormation output
+          CONTROL_PLANE_IP=$(aws cloudformation describe-stacks \
+            --stack-name my-k8s-cluster \
+            --query "Stacks[0].Outputs[?OutputKey=='ControlPlaneIP'].OutputValue" \
+            --output text)
+
+          echo "Control plane IP: $CONTROL_PLANE_IP"
+
+          # Get kubeconfig from SSM
+          aws ssm get-parameter \
+            --name "/k8s/kubeconfig" \
+            --with-decryption \
+            --query "Parameter.Value" \
+            --output text > kubeconfig.yaml
+          
+          # Check if can cat kubeconfig.yaml file
+          cat kubeconfig.yaml
+
+          # Test cluster connection
+          kubectl --kubeconfig=kubeconfig.yaml get nodes
