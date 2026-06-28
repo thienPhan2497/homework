@@ -17,7 +17,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::742819526038:role/github-actions-bootstrap-role
-          aws-region: ap-southeast-1
+          aws-region: us-east-1
 
       # Test 1 — Am I authenticated to AWS?
       - name: Test 1 - AWS Identity
@@ -46,7 +46,7 @@ jobs:
 
           # Get control plane IP from CloudFormation output
           CONTROL_PLANE_IP=$(aws cloudformation describe-stacks \
-            --stack-name my-k8s-cluster \
+            --stack-name k8s-cluster \
             --query "Stacks[0].Outputs[?OutputKey=='ControlPlaneIP'].OutputValue" \
             --output text)
 
