@@ -47,7 +47,8 @@ jobs:
           # Get control plane IP from CloudFormation output
           CONTROL_PLANE_IP=$(aws cloudformation describe-stacks \
             --stack-name k8s-cluster \
-            --query "Stacks[0].Outputs[?OutputKey=='ControlPlaneIP'].OutputValue" \
+            --region ${AWS::Region} \
+            --query "Stacks[0].Outputs[?OutputKey=='ControlPlane0PublicIp'].OutputValue" \
             --output text)
 
           echo "Control plane IP: $CONTROL_PLANE_IP"
