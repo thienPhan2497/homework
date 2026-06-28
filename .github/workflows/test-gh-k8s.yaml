@@ -16,7 +16,7 @@ jobs:
       - name: Configure AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/github-actions-bootstrap-role
+          role-to-assume: arn:aws:iam::742819526038:role/github-actions-bootstrap-role
           aws-region: ap-southeast-1
 
       # Test 1 — Am I authenticated to AWS?
